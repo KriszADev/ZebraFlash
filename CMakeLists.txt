@@ -35,8 +35,15 @@ FetchContent_Declare(
         googletest
         URL https://github.com/google/googletest/archive/refs/heads/main.zip
 )
+
+FetchContent_Declare(
+        nlohmann_json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG v3.11.3
+)
+
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(yaml-cpp googletest)
+FetchContent_MakeAvailable(yaml-cpp googletest nlohmann_json)
 
 # --- Main Application ---
 add_executable(ZebraFlash
@@ -55,7 +62,7 @@ target_include_directories(ZebraFlash PRIVATE
         ${CMAKE_SOURCE_DIR}/utils
 )
 
-target_link_libraries(ZebraFlash PRIVATE yaml-cpp ${OpenCV_LIBS})
+target_link_libraries(ZebraFlash PRIVATE yaml-cpp ${OpenCV_LIBS} nlohmann_json::nlohmann_json)
 
 # --- Google Test Setup ---
 enable_testing()
@@ -80,6 +87,7 @@ target_link_libraries(ZebraFlashTests
         gtest_main
         yaml-cpp
         ${OpenCV_LIBS}
+        nlohmann_json::nlohmann_json
 )
 
 include(GoogleTest)

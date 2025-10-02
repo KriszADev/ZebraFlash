@@ -1,18 +1,18 @@
 {
   # Main parameters
-  video_src: "../../input/abbeyroad3.mp4",  # Path of the input file, use RTSP for real IP camera. e.g: rtsp://localhost:8554/test
-  video_annot: "../../input/abbeyroad3_annotation.csv",  # Path of the annotation CSV file, the format should be: Frame,Intent (id,not-crossing or crossing)
+  video_src: "../../input/IMG_7885.MP4",  # Path of the input file, use RTSP for real IP camera. e.g: rtsp://localhost:8554/test
+  video_annot: "../../input/gyalogosok_IMG_7885.json",  # Path of the annotation CSV file, the format should be: Frame,Intent (id,not-crossing or crossing)
   res_ratio: 0.14,        # Scale resolution for computing optical flow
   # The image processing area (area of interest) can be defined with the following margins
   upper_margin: 250,      # MASK_Y_MIN
-  bottom_margin: 500,     # MASK_Y_MAX
-  left_margin: 950,       # MASK_X_MIN
-  right_margin: 170,      # MASK_X_MAX
+  bottom_margin: 175,     # MASK_Y_MAX
+  left_margin: 250,       # MASK_X_MIN
+  right_margin: 100,      # MASK_X_MAX
 
-  angle_up_min: 345,         # Movement between these two angles should be detected while walking upwards
-  angle_up_max: 20,         # Movement between these two angles should be detected while walking upwards
-  angle_down_min: 165,         # Movement between these two angles should be detected while walking downwards
-  angle_down_max: 210,         # Movement between these two angles should be detected while walking downwards
+  angle_up_min: 160,         # Movement between these two angles should be detected while walking upwards
+  angle_up_max: 200,         # Movement between these two angles should be detected while walking upwards
+  angle_down_min: 350,         # Movement between these two angles should be detected while walking downwards
+  angle_down_max: 20,         # Movement between these two angles should be detected while walking downwards
 
   # Parameters to fine tune Farnebäck algorithm
   pyr_scale: 0.5,         # Image scale (<1) to build pyramids for each image
@@ -33,12 +33,12 @@
   binary_threshold: 150,  # Only take different areas that are different enough (0-255)
   threshold_count: 0,     # minimum number of different pixels from the background model
   seek: 0,            # video starting position in frames
-  seek_end: 2500,            # video ending position in frames
-  debug: true,            # debug messages and screens displayed
+  seek_end: 0,            # video ending position in frames
+  debug: false,            # debug messages and screens displayed
   use_gpu: false,            # GPU acceleration is being used
-  use_multi_thread: false,            # Multi thread is being used
+  use_multi_thread: true,            # Multi thread is being used
   thread_amount: -1,            # number of threads used for multi threading tasks, -1 for auto
-  algorithm: "LK",            # the algorithm used for processing the images. FARNE, LK, YOLO
+  algorithm: "YOLO",            # the algorithm used for processing the images. FARNE, LK, YOLO
 
   #YOLO
   yolo_weights_path: "../../input/yolo/yolov4-tiny.weights",
@@ -46,5 +46,7 @@
   yolo_classes_path: "../../input/yolo/coco.names",
   yolo_confidence_threshold: 0.5,
   yolo_nms_threshold: 0.4,
-  yolo_input_size: 416
+  yolo_input_size: 416,
+
+  moving_up_lock_frames: 5
 }

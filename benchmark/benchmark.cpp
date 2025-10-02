@@ -1,3 +1,4 @@
+#include <nlohmann/json.hpp>
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -30,53 +31,88 @@ Benchmark::~Benchmark() {
     delete impl;
 }
 
-std::vector<CrossIntent> loadGroundTruthCrossingIntent(const std::string& csv_filepath) {
+std::vector<CrossIntent> loadGroundTruthCrossingIntent(const std::string& json_filepath) {
     std::vector<CrossIntent> crossing_intent_data;
-    std::ifstream file(csv_filepath);
+
+    std::ifstream file(json_filepath);
     if (!file.is_open()) {
-        std::cerr << "Error opening CSV file: " << csv_filepath << std::endl;
+        std::cerr << "Error opening JSON file: " << json_filepath << std::endl;
         return crossing_intent_data;
     }
 
-    std::string line;
-    std::getline(file, line);
+    nlohmann::json j;
+    try {
+        file >> j;
+    } catch (const std::exception& e) {
+        std::cerr << "Error parsing JSON: " << e.what() << std::endl;
+        return crossing_intent_data;
+    }
 
-    while (std::getline(file, line)) {
-        std::istringstream ss(line);
-        std::string frame_str, intent_str;
+    for (const auto& pedestrian : j["pedestrians"]) {
+        const auto& state_per_frame = pedestrian["state_per_frame"];
 
-        if (std::getline(ss, frame_str, ',') && std::getline(ss, intent_str)) {
-            int frame = std::stoi(frame_str);
-            bool is_crossing = (intent_str == "crossing");
+        for (auto it = state_per_frame.begin(); it != state_per_frame.end(); ++it) {
+            int frame = std::stoi(it.key());
+            std::string state = it.value();
+
+            // "zebra felé" means moving towards crossing (is_crossing = true)
+            // "áll" means standing/stopped (is_crossing = false)
+            bool is_crossing = (state == "zebra felé");
+
             crossing_intent_data.push_back({frame, is_crossing});
         }
     }
+
+    // Sort by frame number since multiple pedestrians might overlap
+    std::sort(crossing_intent_data.begin(), crossing_intent_data.end(),
+              [](const CrossIntent& a, const CrossIntent& b) {
+                  return a.frame_index < b.frame_index;
+              });
 
     return crossing_intent_data;
 }
 
 
-double crossingIntentRate(const std::vector<BenchmarkResult>& results, const std::vector<CrossIntent>& ground_truth) {
-    int match_count = 0;
-    int total_count = 0;
+CrossingMetrics calculateCrossingMetrics(const std::vector<BenchmarkResult>& results, const std::vector<CrossIntent>& ground_truth) {
+    CrossingMetrics metrics = {0.0, 0.0, 0.0, 0, 0, 0, 0};
+
+    std::unordered_map<int, bool> ground_truth_map;
+    for (const auto& truth : ground_truth) {
+        ground_truth_map[truth.frame_index] = truth.is_crossing;
+    }
 
     for (const auto& result : results) {
-        for (const auto& truth : ground_truth) {
-            if (result.frame_index == truth.frame_index) {
-                total_count++;
-                if (result.crossing_intent == truth.crossing_intent) {
-                    match_count++;
-                }
-                break;
-            }
+        bool ground_truth_value = false;
+        auto it = ground_truth_map.find(result.frame_index);
+        if (it != ground_truth_map.end()) {
+            ground_truth_value = it->second;
+        }
+
+        if (result.is_crossing && ground_truth_value) {
+            metrics.true_positives++;
+        } else if (result.is_crossing && !ground_truth_value) {
+            metrics.false_positives++;
+        } else if (!result.is_crossing && !ground_truth_value) {
+            metrics.true_negatives++;
+        } else if (!result.is_crossing && ground_truth_value) {
+            metrics.false_negatives++;
         }
     }
 
-    if (total_count == 0) {
-        return -1;
-    }
+    int total_crossing = metrics.true_positives + metrics.false_negatives;
+    int total_not_crossing = metrics.true_negatives + metrics.false_positives;
 
-    return static_cast<double>(match_count) / total_count;
+    metrics.crossing_accuracy = (total_crossing > 0)
+        ? static_cast<double>(metrics.true_positives) / total_crossing
+        : 0.0;
+
+    metrics.not_crossing_accuracy = (total_not_crossing > 0)
+        ? static_cast<double>(metrics.true_negatives) / total_not_crossing
+        : 0.0;
+
+    metrics.balanced_accuracy = (metrics.crossing_accuracy + metrics.not_crossing_accuracy) / 2.0;
+
+    return metrics;
 }
 
 void saveResultToCSV(const std::string& filename,
@@ -97,51 +133,59 @@ void saveResultToCSV(const std::string& filename,
     }
     double average_fps = results.empty() ? 0.0 : total_fps / results.size();
 
-    double crossing_intent_rate = crossingIntentRate(results, ground_truth);
-
-    double predicted_crossing = 0;
-    double predicted_not_crossing = 0;
-    double ground_crossing = 0;
-    double ground_not_crossing = 0;
-
-    std::unordered_map<int, bool> ground_truth_map;
-    for (const auto& r : results) {
-        auto it = std::find_if(ground_truth.begin(), ground_truth.end(),
-                               [&](const CrossIntent& gt) { return gt.frame_index == r.frame_index; });
-        if (it != ground_truth.end()) {
-            ground_truth_map[it->frame_index] = it->crossing_intent;
-            if (it->crossing_intent)
-                ground_crossing++;
-            else
-                ground_not_crossing++;
-        }
-    }
-
-    for (const auto& r : results) {
-        if (r.crossing_intent)
-            predicted_crossing++;
-        else
-            predicted_not_crossing++;
-    }
+    CrossingMetrics metrics = calculateCrossingMetrics(results, ground_truth);
 
     file << "Average FPS:," << std::fixed << std::setprecision(3) << average_fps << "\n";
-    file << "Crossing Intent Rate (%):," << crossing_intent_rate << "\n";
-    file << "Not Crossing Class Error (%):," << (1.0 - predicted_not_crossing / ground_not_crossing) << "\n";
-    file << "Crossing Class Error (%):," << (1.0 - predicted_crossing / ground_crossing) << "\n";
+    file << "\n=== Crossing Intent Metrics ===\n";
+    file << "Balanced Accuracy:," << std::setprecision(2) << (metrics.balanced_accuracy * 100) << "%\n";
+    file << "Crossing Class Accuracy:," << std::setprecision(2) << (metrics.crossing_accuracy * 100) << "%\n";
+    file << "Not Crossing Class Accuracy:," << std::setprecision(2) << (metrics.not_crossing_accuracy * 100) << "%\n";
+    file << "\n=== Confusion Matrix ===\n";
+    file << "True Positives (Crossing):," << metrics.true_positives << "\n";
+    file << "False Positives (Predicted Crossing):," << metrics.false_positives << "\n";
+    file << "True Negatives (Not Crossing):," << metrics.true_negatives << "\n";
+    file << "False Negatives (Missed Crossing):," << metrics.false_negatives << "\n";
 
-    file << "Frame Index,Use GPU,FPS,Predicted Intent,Groundtruth Intent\n";
+    double precision = (metrics.true_positives + metrics.false_positives > 0)
+        ? static_cast<double>(metrics.true_positives) / (metrics.true_positives + metrics.false_positives)
+        : 0.0;
+    double recall = (metrics.true_positives + metrics.false_negatives > 0)
+        ? static_cast<double>(metrics.true_positives) / (metrics.true_positives + metrics.false_negatives)
+        : 0.0;
+    double f1_score = (precision + recall > 0)
+        ? 2 * (precision * recall) / (precision + recall)
+        : 0.0;
+
+    file << "\n=== Additional Metrics ===\n";
+    file << "Precision:," << std::setprecision(2) << (precision * 100) << "%\n";
+    file << "Recall:," << std::setprecision(2) << (recall * 100) << "%\n";
+    file << "F1 Score:," << std::setprecision(2) << (f1_score * 100) << "%\n";
+
+    file << "\nFrame Index,Use GPU,FPS,Predicted Intent,Groundtruth Intent,Correct\n";
+
+    std::unordered_map<int, bool> ground_truth_map;
+    for (const auto& gt : ground_truth) {
+        ground_truth_map[gt.frame_index] = gt.is_crossing;
+    }
 
     for (const auto& r : results) {
         double fps = (r.process_time_ms > 0.0) ? 1000.0 / r.process_time_ms : 0.0;
-        bool predicted_intent = r.crossing_intent;
+        bool predicted_intent = r.is_crossing;
+
+        bool groundtruth_intent = false;
         auto gt_it = ground_truth_map.find(r.frame_index);
-        bool groundtruth_intent = (gt_it != ground_truth_map.end()) ? gt_it->second : false;
+        if (gt_it != ground_truth_map.end()) {
+            groundtruth_intent = gt_it->second;
+        }
+
+        bool correct = (predicted_intent == groundtruth_intent);
 
         file << r.frame_index << ","
              << (r.use_gpu ? "Yes" : "No") << ","
              << std::fixed << std::setprecision(3) << fps << ","
              << (predicted_intent ? "Yes" : "No") << ","
-             << (groundtruth_intent ? "Yes" : "No") << "\n";
+             << (groundtruth_intent ? "Yes" : "No") << ","
+             << (correct ? "Yes" : "No") << "\n";
     }
     file.close();
     std::cout << "Results saved to " << filename << std::endl;

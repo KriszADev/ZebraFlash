@@ -65,6 +65,9 @@ void MotionDetector::loadConfig(const std::string &configFile) {
     config_.yolo_confidence_threshold = config["yolo_confidence_threshold"].as<float>();
     config_.yolo_nms_threshold = config["yolo_nms_threshold"].as<float>();
     config_.yolo_input_size = config["yolo_input_size"].as<int>();
+    config_.moving_up_lock_frames = config["moving_up_lock_frames"]
+    ? config["moving_up_lock_frames"].as<int>()
+    : 1;
 }
 
 void MotionDetector::initializeParallelProcessing() {
@@ -116,7 +119,7 @@ float MotionDetector::detectFarneOpticalFlowMotion(cv::Mat& frame, cv::Mat& gray
     cv::Mat motionMask = cv::Mat::ones(frame.size(), CV_8UC1) * 255;
     for (const auto& contour : contours) {
         double area = cv::contourArea(contour);
-        if (area > 5000) {
+        if (area > 12000) {
             cv::Rect bound = cv::boundingRect(contour);
             rectangle(motionMask, bound, cv::Scalar(0), cv::FILLED);
         }
@@ -362,7 +365,7 @@ float MotionDetector::detectLKOpticalFlowMotion(cv::Mat& frame, cv::Mat& gray, c
 
         double aspectRatio = static_cast<double>(bound.height) / bound.width;
 
-        if (area > 500 && area < 4500 && aspectRatio > 1.2) {
+        if (area > 12000 || aspectRatio > 2.5) {
             rectangle(motionMask, bound, cv::Scalar(0), cv::FILLED);
         }
     }
@@ -456,46 +459,49 @@ float MotionDetector::detectLKOpticalFlowMotion(cv::Mat& frame, cv::Mat& gray, c
         if (status[i]) {
             float dx = curr_pts[i].x - prev_pts[i].x;
             float dy = curr_pts[i].y - prev_pts[i].y;
-            float angle = std::atan2(dy, dx) * 180.0f / CV_PI;
-            if (angle < 0) angle += 360.0f;
             float magnitude = std::sqrt(dx * dx + dy * dy);
-            if (magnitude > config_.threshold)
+
+            // FIXME: CHECK IF WORKS: Filter - only consider moderate velocities typical of pedestrians
+            if (magnitude > config_.threshold && magnitude < 10) {
+                float angle = std::atan2(dy, dx) * 180.0f / CV_PI;
+                if (angle < 0) angle += 360.0f;
                 move_sense.push_back(angle);
+            }
         }
     }
 
     // if (move_sense.empty()) {
-        // cv::Mat fg_mask;
-        // backSub->apply(frame, fg_mask);
-        //
-        // cv::Mat blurred, tresh_frame;
-        // cv::GaussianBlur(fg_mask, blurred, cv::Size(7, 7), 0);
-        // cv::threshold(blurred, tresh_frame, config_.binary_threshold, 255, cv::THRESH_BINARY);
-        //
-        // if (config_.debug) {
-        //     cv::imshow("LK threshold frame", tresh_frame);
-        // }
-        //
-        // if (cv::countNonZero(tresh_frame) > config_.threshold_count) {
-        //     // Difference detected
-        //     directions_map[directions_map.size() - 1][0] = 0;
-        //     directions_map[directions_map.size() - 1][1] = 0;
-        //     directions_map[directions_map.size() - 1][2] = 1;
-        //     directions_map[directions_map.size() - 1][3] = 0;
-        // }
-        // else {
-        //     // No movement, no difference detected - WAITING
-        //     directions_map[directions_map.size() - 1][0] = 0;
-        //     directions_map[directions_map.size() - 1][1] = 0;
-        //     directions_map[directions_map.size() - 1][2] = 0;
-        //     directions_map[directions_map.size() - 1][3] = 1;
-        // }
-        //
-        // MotionUtils::roll(directions_map);
-        //
-        // if (hsv.empty() || hsv.type() != CV_8UC3) {
-        //     hsv = cv::Mat(frame.size(), CV_8UC3, cv::Scalar(0, 255, 0));
-        // }
+    //     cv::Mat fg_mask;
+    //     backSub->apply(frame, fg_mask);
+    //
+    //     cv::Mat blurred, tresh_frame;
+    //     cv::GaussianBlur(fg_mask, blurred, cv::Size(7, 7), 0);
+    //     cv::threshold(blurred, tresh_frame, config_.binary_threshold, 255, cv::THRESH_BINARY);
+    //
+    //     if (config_.debug) {
+    //         cv::imshow("LK threshold frame", tresh_frame);
+    //     }
+    //
+    //     if (cv::countNonZero(tresh_frame) > config_.threshold_count) {
+    //         // Difference detected
+    //         directions_map[directions_map.size() - 1][0] = 0;
+    //         directions_map[directions_map.size() - 1][1] = 0;
+    //         directions_map[directions_map.size() - 1][2] = 1;
+    //         directions_map[directions_map.size() - 1][3] = 0;
+    //     }
+    //     else {
+    //         // No movement, no difference detected - WAITING
+    //         directions_map[directions_map.size() - 1][0] = 0;
+    //         directions_map[directions_map.size() - 1][1] = 0;
+    //         directions_map[directions_map.size() - 1][2] = 0;
+    //         directions_map[directions_map.size() - 1][3] = 1;
+    //     }
+    //
+    //     MotionUtils::roll(directions_map);
+    //
+    //     if (hsv.empty() || hsv.type() != CV_8UC3) {
+    //         hsv = cv::Mat(frame.size(), CV_8UC3, cv::Scalar(0, 255, 0));
+    //     }
     //     return -1.0f;
     // }
 
@@ -824,6 +830,8 @@ bool MotionDetector::processFrame(cv::Mat& frame, cv::Mat& orig_frame, cv::Mat& 
 
     int loc = MotionUtils::calculateMaxMeanColumn(directions_map);
 
+    loc = applyMovingUpLock(loc);
+
     std::string text;
     if (loc == 0) {
         text = "Moving up (LED ON!)";
@@ -850,9 +858,37 @@ bool MotionDetector::processFrame(cv::Mat& frame, cv::Mat& orig_frame, cv::Mat& 
     cv::putText(orig_frame, text, cv::Point(30, 90), cv::FONT_HERSHEY_COMPLEX,
         orig_frame.cols / 500.0, cv::Scalar(0, 0, 255), text_thinkness);
 
+    if (is_moving_up_locked) {
+        std::string lock_info = "LOCKED: " + std::to_string(moving_up_lock_counter) +
+                                "/" + std::to_string(config_.moving_up_lock_frames);
+        cv::putText(orig_frame, lock_info, cv::Point(30, 240), cv::FONT_HERSHEY_COMPLEX,
+            frame.cols / 500.0, cv::Scalar(255, 0, 255), 3);
+    }
+
     gray_previous = gray;
 
     return loc == 0 || loc == 2;
+}
+
+int MotionDetector::applyMovingUpLock(int current_loc) {
+    if (is_moving_up_locked) {
+        moving_up_lock_counter++;
+
+        if (moving_up_lock_counter >= config_.moving_up_lock_frames) {
+            is_moving_up_locked = false;
+            moving_up_lock_counter = 0;
+            return current_loc;
+        } else {
+            return 0;
+        }
+    }
+
+    if (current_loc == 0) {
+        is_moving_up_locked = true;
+        moving_up_lock_counter = 0;
+    }
+
+    return current_loc;
 }
 
 void MotionDetector::run() {

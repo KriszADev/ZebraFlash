@@ -46,6 +46,7 @@ struct AppConfig {
     float yolo_confidence_threshold;
     float yolo_nms_threshold;
     int yolo_input_size;
+    int moving_up_lock_frames;
 };
 
 class MotionDetector {
@@ -64,6 +65,9 @@ private:
 
     std::unique_ptr<ThreadPool> thread_pool;
 
+    bool is_moving_up_locked = false;
+    int moving_up_lock_counter = 0;
+
     //YOLO fields, may need a separate file for YOLO
     cv::dnn::Net yolo_network;
     std::vector<std::string> class_names;
@@ -73,6 +77,7 @@ private:
     void loadConfig(const std::string& configFile);
     void initializeParallelProcessing();
     bool processFrame(cv::Mat& frame, cv::Mat& orig_frame, cv::Mat& gray_previous);
+    int applyMovingUpLock(int current_loc);
     float detectMotion(cv::Mat& frame, cv::Mat& gray, cv::Mat& gray_previous, cv::Mat& hsv);
     float detectFarneOpticalFlowMotion(cv::Mat& frame, cv::Mat& gray, cv::Mat& gray_previous, cv::Mat& hsv);
     float detectLKOpticalFlowMotion(cv::Mat& frame, cv::Mat& gray, cv::Mat& gray_previous, cv::Mat& hsv);
