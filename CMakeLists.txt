@@ -73,6 +73,10 @@ add_executable(ZebraFlashTests
         utils/motion_utils.cpp
         thread-pool/thread_pool.cpp
         benchmark/benchmark.cpp
+        tests/benchmarks/benchmark_common.h
+        tests/benchmarks/farne_tests/benchmark_farne_cs_test.cpp
+        tests/benchmarks/farne_tests/benchmark_farne_cm_test.cpp
+        tests/benchmarks/farne_tests/benchmark_farne_g_test.cpp
 )
 
 target_include_directories(ZebraFlashTests PRIVATE
