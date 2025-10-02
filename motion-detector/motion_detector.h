@@ -51,7 +51,7 @@ struct AppConfig {
 
 class MotionDetector {
 public:
-    MotionDetector(const std::string& configFile);
+    MotionDetector(const std::string& configFile, const std::string& testIdentifier  = "");
     void run();
 
     AppConfig& getConfig();
@@ -59,6 +59,7 @@ public:
 private:
     AppConfig config_;
     const std::string WINDOW_NAME = "window";
+    std::string testIdentifier;
 
     std::vector<std::vector<int>> directions_map;
     cv::Ptr<cv::BackgroundSubtractor> backSub;

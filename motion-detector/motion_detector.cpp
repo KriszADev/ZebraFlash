@@ -14,8 +14,9 @@
 #include "../benchmark/benchmark.h"
 #include "../utils/motion_utils.h"
 
-MotionDetector::MotionDetector(const std::string &configFile) {
+MotionDetector::MotionDetector(const std::string &configFile, const std::string& testIdentifier) {
     loadConfig(configFile);
+    this->testIdentifier = testIdentifier;
 
     directions_map.resize(config_.size, std::vector<int>(4, 0));
     backSub = cv::createBackgroundSubtractorMOG2(500, 16, true);
@@ -961,7 +962,7 @@ void MotionDetector::run() {
         }
     }
 
-    saveBenchmarkResults(config_.use_gpu, config_.algorithm, results, config_.video_annot);
+    saveBenchmarkResults(results, config_.video_annot, testIdentifier);
 
     cap.release();
     cv::destroyAllWindows();

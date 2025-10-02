@@ -201,7 +201,7 @@ std::string getTimestamp() {
     return oss.str();
 }
 
-void saveBenchmarkResults(bool use_gpu, const std::string& algorithm, const std::vector<BenchmarkResult>& results, const std::string& annotationFile) {
+void saveBenchmarkResults(const std::vector<BenchmarkResult>& results, const std::string& annotationFile, const std::string& testIdentifier) {
     std::string results_dir = "results";
     if (!std::filesystem::exists(results_dir)) {
         if (!std::filesystem::create_directory(results_dir)) {
@@ -211,12 +211,79 @@ void saveBenchmarkResults(bool use_gpu, const std::string& algorithm, const std:
     }
 
     std::string timestamp = getTimestamp();
-    std::string filename = results_dir + "/" + (use_gpu ? "gpu" : "cpu") + "_" + algorithm + "_benchmark_" + timestamp + ".csv";
+    std::string detail_filename = results_dir + "/" + testIdentifier + "_benchmark_" + timestamp + ".csv";
+    std::string summary_filename = results_dir + "/benchmark_summary.csv";
 
-    std::cout << "Saving benchmark results to: " << filename << std::endl;
+    std::cout << "Saving benchmark results..." << std::endl;
     std::cout << "Current working directory: " << std::filesystem::current_path() << std::endl;
 
     auto ground_truth = loadGroundTruthCrossingIntent(annotationFile);
 
-    saveResultToCSV(filename, results, ground_truth);
+    saveResultToCSV(detail_filename, results, ground_truth);
+
+    appendToSummaryCSV(summary_filename, testIdentifier, results, ground_truth, detail_filename);
+}
+
+void appendToSummaryCSV(const std::string& summary_file,
+                        const std::string& testIdentifier,
+                        const std::vector<BenchmarkResult>& results,
+                        const std::vector<CrossIntent>& ground_truth,
+                        const std::string& detail_filename) {
+
+    bool file_exists = std::filesystem::exists(summary_file);
+    std::ofstream file(summary_file, std::ios::app);
+
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open summary file " << summary_file << std::endl;
+        return;
+    }
+
+    // Write header if new file
+    if (!file_exists) {
+        file << "Test ID,Timestamp,Avg FPS,Balanced Accuracy,Crossing Accuracy,Not Crossing Accuracy,"
+             << "Precision,Recall,F1 Score,TP,FP,TN,FN,Total Frames,Detail File\n";
+    }
+
+    // Calculate metrics
+    CrossingMetrics metrics = calculateCrossingMetrics(results, ground_truth);
+
+    double total_fps = 0.0;
+    for (const auto& r : results) {
+        if (r.process_time_ms > 0.0) {
+            total_fps += 1000.0 / r.process_time_ms;
+        }
+    }
+    double avg_fps = results.empty() ? 0.0 : total_fps / results.size();
+
+    double precision = (metrics.true_positives + metrics.false_positives > 0)
+        ? static_cast<double>(metrics.true_positives) / (metrics.true_positives + metrics.false_positives)
+        : 0.0;
+    double recall = (metrics.true_positives + metrics.false_negatives > 0)
+        ? static_cast<double>(metrics.true_positives) / (metrics.true_positives + metrics.false_negatives)
+        : 0.0;
+    double f1_score = (precision + recall > 0)
+        ? 2 * (precision * recall) / (precision + recall)
+        : 0.0;
+
+    // Extract just the filename from the full path for cleaner summary
+    std::string detail_file_short = std::filesystem::path(detail_filename).filename().string();
+
+    file << testIdentifier << ","
+         << getTimestamp() << ","
+         << std::fixed << std::setprecision(2) << avg_fps << ","
+         << std::setprecision(4) << metrics.balanced_accuracy << ","
+         << metrics.crossing_accuracy << ","
+         << metrics.not_crossing_accuracy << ","
+         << precision << ","
+         << recall << ","
+         << f1_score << ","
+         << metrics.true_positives << ","
+         << metrics.false_positives << ","
+         << metrics.true_negatives << ","
+         << metrics.false_negatives << ","
+         << results.size() << ","
+         << detail_file_short << "\n";
+
+    file.close();
+    std::cout << "Summary appended to " << summary_file << std::endl;
 }

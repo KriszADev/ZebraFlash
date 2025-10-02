@@ -43,6 +43,7 @@ std::string getTimestamp();
 std::vector<CrossIntent> loadGroundTruthCrossingIntent(const std::string& xml_filepath);
 CrossingMetrics calculateCrossingMetrics(const std::vector<BenchmarkResult>& results, const std::vector<CrossIntent>& ground_truth);
 void saveResultToCSV(const std::string& filename, const std::vector<BenchmarkResult>& results);
-void saveBenchmarkResults(bool use_gpu, const std::string& algorithm, const std::vector<BenchmarkResult>& results, const std::string& annotationFile);
+void saveBenchmarkResults(const std::vector<BenchmarkResult>& results, const std::string& annotationFile, const std::string& testIdentifier);
+void appendToSummaryCSV(const std::string& summary_file, const std::string& test_config, const std::vector<BenchmarkResult>& results, const std::vector<CrossIntent>& ground_truth, const std::string& detail_filename);
 
 #endif //BENCHMARK_H
