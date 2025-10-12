@@ -57,3 +57,25 @@ After the build completes, the generated binaries will be located in the `bin\Re
 Don't forget to setup OpenCV environments to the `bin\Release` folder.
 
 If using **CUDA**, don't forget to add `-DCMAKE_CXX_FLAGS="-DHAVE_CUDA"` flag to the cmake command.
+
+# Creating a Ground Truth JSON File in Blender
+
+To generate a **ground truth JSON file** from your own video using **Blender**, follow these steps:
+
+1. **Open Blender** → click the **“+”** button and choose **VFX → Motion Tracking**.  
+2. Drag and drop the desired video you want to analyze into the editor.  
+3. In the **Track** panel on the right:  
+   - Click **Set Scene Frames**  
+   - Then click **Prefetch** to load the frames.  
+4. To start tracking an object or person:  
+   - Hold **Ctrl + Left Click** on a fixed point (e.g., a person’s shoulder).  
+   - In the right panel, enable:  
+     - ✅ **Normalize**  
+     - **Motion Model** → set to **Location, Rotation & Scale** (you can also try **Perspective** or **Affine**).  
+   - Increase **Pattern Size** and **Search Size** if needed.  
+5. Once tracking is complete, switch to the **Scripting** tab.  
+6. Open the `blender.py` script.  
+   - Modify **two variables**:  
+     - `clip_name`: the name of your clip (visible above the video in the Motion Tracking tab).  
+     - `output_path`: the file path where the JSON file should be saved.  
+7. Run the script. The generated **JSON file** can now be used as a **ground truth** for various tracking or detection algorithms.
