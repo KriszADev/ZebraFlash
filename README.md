@@ -79,3 +79,12 @@ To generate a **ground truth JSON file** from your own video using **Blender**, 
      - `clip_name`: the name of your clip (visible above the video in the Motion Tracking tab).  
      - `output_path`: the file path where the JSON file should be saved.  
 7. Run the script. The generated **JSON file** can now be used as a **ground truth** for various tracking or detection algorithms.
+
+---
+
+### 🎥 Video Tutorial
+
+For a visual walkthrough, check out this video:
+
+[How to do motion tracking in Blender – YouTube](https://www.youtube.com/watch?v=ZIQa4Ff3iuk)  
+It demonstrates the tracking steps and Blender interface usage which complement this README.
