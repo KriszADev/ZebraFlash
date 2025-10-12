@@ -198,7 +198,7 @@ std::string getTimestamp() {
     std::tm tm = *std::localtime(&time);
 
     std::ostringstream oss;
-    oss << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S");
+    oss << std::put_time(&tm, "%Y-%m-%d_%H-%M");
     return oss.str();
 }
 

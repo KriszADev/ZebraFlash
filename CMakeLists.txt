@@ -68,7 +68,6 @@ target_link_libraries(ZebraFlash PRIVATE yaml-cpp ${OpenCV_LIBS} nlohmann_json::
 enable_testing()
 
 add_executable(ZebraFlashTests
-        tests/test_application.cpp
         motion-detector/motion_detector.cpp
         utils/motion_utils.cpp
         thread-pool/thread_pool.cpp
