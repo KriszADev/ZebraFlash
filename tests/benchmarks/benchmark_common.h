@@ -15,6 +15,7 @@ namespace BenchmarkHelpers {
         switch (video) {
             case 1: return "../../input/IMG_7885.MP4";
             case 2: return "../../input/IMG_7874.MP4";
+            case 3: return "../../input/IMG_7875.mp4";
             default: return "";
         }
     }
@@ -23,6 +24,7 @@ namespace BenchmarkHelpers {
         switch (video) {
             case 1: return "../../input/IMG_7885.json";
             case 2: return "../../input/IMG_7874.json";
+            case 3: return "../../input/IMG_7875.json";
             default: return "";
         }
     }
@@ -41,7 +43,7 @@ namespace BenchmarkHelpers {
         bool useGpu,
         bool useMultiThread,
         const std::function<void(MotionDetector&)>& configFunc,
-        const std::vector<int>& videos = {1, 2}
+        const std::vector<int>& videos = {1, 2, 3}
     ) {
         for (int video : videos) {
             std::string fullTestId = testId + "_video" + std::to_string(video);

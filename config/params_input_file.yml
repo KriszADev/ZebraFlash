@@ -10,7 +10,7 @@
   right_margin: 100,      # MASK_X_MAX
 
   angle_up_min: 160,         # Movement between these two angles should be detected while walking upwards
-  angle_up_max: 200,         # Movement between these two angles should be detected while walking upwards
+  angle_up_max: 190,         # Movement between these two angles should be detected while walking upwards
   angle_down_min: 350,         # Movement between these two angles should be detected while walking downwards
   angle_down_max: 20,         # Movement between these two angles should be detected while walking downwards
 
