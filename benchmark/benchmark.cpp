@@ -242,7 +242,7 @@ void appendToSummaryCSV(const std::string& summary_file,
     // Write header if new file
     if (!file_exists) {
         file << "Test ID,Timestamp,Avg FPS,Balanced Accuracy,Crossing Accuracy,Not Crossing Accuracy,"
-             << "Precision,Recall,F1 Score,TP,FP,TN,FN,Total Frames,Detail File\n";
+             << "Precision,Recall,F1 Score,TP,FP,TN,FN,Total Frames,Weighted Score,Detail File\n";
     }
 
     // Calculate metrics
@@ -283,6 +283,7 @@ void appendToSummaryCSV(const std::string& summary_file,
          << metrics.true_negatives << ","
          << metrics.false_negatives << ","
          << results.size() << ","
+         << (recall * 0.5) + (f1_score * 0.35) + (avg_fps * 0.15 / 1000.0) << ","
          << detail_file_short << "\n";
 
     file.close();
