@@ -872,6 +872,11 @@ bool MotionDetector::processFrame(cv::Mat& frame, cv::Mat& orig_frame, cv::Mat& 
 }
 
 int MotionDetector::applyMovingUpLock(int current_loc) {
+
+    if (config_.moving_up_lock_frames == 0) {
+        return current_loc;
+    }
+
     if (is_moving_up_locked) {
         moving_up_lock_counter++;
 
