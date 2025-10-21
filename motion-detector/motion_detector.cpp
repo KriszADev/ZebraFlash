@@ -66,9 +66,7 @@ void MotionDetector::loadConfig(const std::string &configFile) {
     config_.yolo_confidence_threshold = config["yolo_confidence_threshold"].as<float>();
     config_.yolo_nms_threshold = config["yolo_nms_threshold"].as<float>();
     config_.yolo_input_size = config["yolo_input_size"].as<int>();
-    config_.moving_up_lock_frames = config["moving_up_lock_frames"]
-    ? config["moving_up_lock_frames"].as<int>()
-    : 1;
+    config_.moving_up_lock_frames = config["moving_up_lock_frames"].as<int>();
 }
 
 void MotionDetector::initializeParallelProcessing() {

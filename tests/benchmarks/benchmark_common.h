@@ -29,7 +29,14 @@ namespace BenchmarkHelpers {
         }
     }
 
+    inline void setYOLOFiles(MotionDetector& detector) {
+        detector.getConfig().yolo_weights_path = "../../input/yolo/yolov4-tiny.weights";
+        detector.getConfig().yolo_config_path = "../../input/yolo/yolov4-tiny.cfg";
+        detector.getConfig().yolo_classes_path = "../../input/yolo/coco.names";
+    }
+
     inline void setCommonConfig(MotionDetector& detector, int video) {
+        detector.getConfig().moving_up_lock_frames = 0;
         detector.getConfig().debug = false;
         detector.getConfig().video_src = getVideoSrc(video);
         detector.getConfig().video_annot = getVideoAnnot(video);

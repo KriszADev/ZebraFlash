@@ -12,7 +12,6 @@ TEST(BenchmarksTest, LKMultiCPU_DefaultConfig) {
             d.getConfig().quality_level = 0.3;
             d.getConfig().min_distance = 7;
             d.getConfig().threshold = 2.5;
-            d.getConfig().moving_up_lock_frames = 5;
         }
     );
 }
@@ -25,7 +24,6 @@ TEST(BenchmarksTest, LKMultiCPU_HighAccuracy) {
             d.getConfig().quality_level = 0.5;
             d.getConfig().min_distance = 5;
             d.getConfig().threshold = 2.0;
-            d.getConfig().moving_up_lock_frames = 10;
         }
     );
 }
@@ -38,7 +36,6 @@ TEST(BenchmarksTest, LKMultiCPU_FastProcessing) {
             d.getConfig().quality_level = 0.2;
             d.getConfig().min_distance = 10;
             d.getConfig().threshold = 3.0;
-            d.getConfig().moving_up_lock_frames = 3;
         }
     );
 }
@@ -51,7 +48,6 @@ TEST(BenchmarksTest, LKMultiCPU_SensitiveDetection) {
             d.getConfig().quality_level = 0.25;
             d.getConfig().min_distance = 7;
             d.getConfig().threshold = 1.5;
-            d.getConfig().moving_up_lock_frames = 2;
         }
     );
 }
@@ -64,7 +60,6 @@ TEST(BenchmarksTest, LKMultiCPU_ConservativeDetection) {
             d.getConfig().quality_level = 0.4;
             d.getConfig().min_distance = 10;
             d.getConfig().threshold = 4.0;
-            d.getConfig().moving_up_lock_frames = 15;
         }
     );
 }
@@ -77,33 +72,6 @@ TEST(BenchmarksTest, LKMultiCPU_LargeMotion) {
             d.getConfig().quality_level = 0.35;
             d.getConfig().min_distance = 15;
             d.getConfig().threshold = 2.5;
-            d.getConfig().moving_up_lock_frames = 5;
-        }
-    );
-}
-
-// No frame locking (immediate response)
-TEST(BenchmarksTest, LKMultiCPU_NoFrameLock) {
-    BenchmarkHelpers::runBenchmarkTest(test_info_->name(), "LK", false, true,
-        [](MotionDetector& d) {
-            d.getConfig().max_corners = 150;
-            d.getConfig().quality_level = 0.3;
-            d.getConfig().min_distance = 7;
-            d.getConfig().threshold = 2.5;
-            d.getConfig().moving_up_lock_frames = 0;
-        }
-    );
-}
-
-// Extended frame locking (stable detection)
-TEST(BenchmarksTest, LKMultiCPU_ExtendedFrameLock) {
-    BenchmarkHelpers::runBenchmarkTest(test_info_->name(), "LK", false, true,
-        [](MotionDetector& d) {
-            d.getConfig().max_corners = 150;
-            d.getConfig().quality_level = 0.3;
-            d.getConfig().min_distance = 7;
-            d.getConfig().threshold = 2.5;
-            d.getConfig().moving_up_lock_frames = 20;
         }
     );
 }

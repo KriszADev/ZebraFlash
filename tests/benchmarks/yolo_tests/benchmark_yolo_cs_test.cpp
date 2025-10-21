@@ -8,13 +8,10 @@
 TEST(BenchmarksTest, YOLOSingleCPU_DefaultConfig) {
     BenchmarkHelpers::runBenchmarkTest(test_info_->name(), "YOLO", false, false,
         [](MotionDetector& d) {
-            d.getConfig().yolo_weights_path = "../../input/yolo/yolov4-tiny.weights";
-            d.getConfig().yolo_config_path = "../../input/yolo/yolov4-tiny.cfg";
-            d.getConfig().yolo_classes_path = "../../input/yolo/coco.names";
+            BenchmarkHelpers::setYOLOFiles(d);
             d.getConfig().yolo_confidence_threshold = 0.5;
             d.getConfig().yolo_nms_threshold = 0.4;
             d.getConfig().yolo_input_size = 416;
-            d.getConfig().moving_up_lock_frames = 5;
         }
     );
 }
@@ -23,13 +20,10 @@ TEST(BenchmarksTest, YOLOSingleCPU_DefaultConfig) {
 TEST(BenchmarksTest, YOLOSingleCPU_HighAccuracy) {
     BenchmarkHelpers::runBenchmarkTest(test_info_->name(), "YOLO", false, false,
         [](MotionDetector& d) {
-            d.getConfig().yolo_weights_path = "../../input/yolo/yolov4-tiny.weights";
-            d.getConfig().yolo_config_path = "../../input/yolo/yolov4-tiny.cfg";
-            d.getConfig().yolo_classes_path = "../../input/yolo/coco.names";
+            BenchmarkHelpers::setYOLOFiles(d);
             d.getConfig().yolo_confidence_threshold = 0.7;
             d.getConfig().yolo_nms_threshold = 0.3;
             d.getConfig().yolo_input_size = 608;
-            d.getConfig().moving_up_lock_frames = 10;
         }
     );
 }
@@ -38,13 +32,10 @@ TEST(BenchmarksTest, YOLOSingleCPU_HighAccuracy) {
 TEST(BenchmarksTest, YOLOSingleCPU_FastProcessing) {
     BenchmarkHelpers::runBenchmarkTest(test_info_->name(), "YOLO", false, false,
         [](MotionDetector& d) {
-            d.getConfig().yolo_weights_path = "../../input/yolo/yolov4-tiny.weights";
-            d.getConfig().yolo_config_path = "../../input/yolo/yolov4-tiny.cfg";
-            d.getConfig().yolo_classes_path = "../../input/yolo/coco.names";
+            BenchmarkHelpers::setYOLOFiles(d);
             d.getConfig().yolo_confidence_threshold = 0.3;
             d.getConfig().yolo_nms_threshold = 0.5;
             d.getConfig().yolo_input_size = 320;
-            d.getConfig().moving_up_lock_frames = 3;
         }
     );
 }
@@ -53,13 +44,10 @@ TEST(BenchmarksTest, YOLOSingleCPU_FastProcessing) {
 TEST(BenchmarksTest, YOLOSingleCPU_SensitiveDetection) {
     BenchmarkHelpers::runBenchmarkTest(test_info_->name(), "YOLO", false, false,
         [](MotionDetector& d) {
-            d.getConfig().yolo_weights_path = "../../input/yolo/yolov4-tiny.weights";
-            d.getConfig().yolo_config_path = "../../input/yolo/yolov4-tiny.cfg";
-            d.getConfig().yolo_classes_path = "../../input/yolo/coco.names";
+            BenchmarkHelpers::setYOLOFiles(d);
             d.getConfig().yolo_confidence_threshold = 0.25;
             d.getConfig().yolo_nms_threshold = 0.5;
             d.getConfig().yolo_input_size = 416;
-            d.getConfig().moving_up_lock_frames = 2;
         }
     );
 }
@@ -68,13 +56,10 @@ TEST(BenchmarksTest, YOLOSingleCPU_SensitiveDetection) {
 TEST(BenchmarksTest, YOLOSingleCPU_ConservativeDetection) {
     BenchmarkHelpers::runBenchmarkTest(test_info_->name(), "YOLO", false, false,
         [](MotionDetector& d) {
-            d.getConfig().yolo_weights_path = "../../input/yolo/yolov4-tiny.weights";
-            d.getConfig().yolo_config_path = "../../input/yolo/yolov4-tiny.cfg";
-            d.getConfig().yolo_classes_path = "../../input/yolo/coco.names";
+            BenchmarkHelpers::setYOLOFiles(d);
             d.getConfig().yolo_confidence_threshold = 0.75;
             d.getConfig().yolo_nms_threshold = 0.3;
             d.getConfig().yolo_input_size = 416;
-            d.getConfig().moving_up_lock_frames = 15;
         }
     );
 }
@@ -83,43 +68,10 @@ TEST(BenchmarksTest, YOLOSingleCPU_ConservativeDetection) {
 TEST(BenchmarksTest, YOLOSingleCPU_LargeMotion) {
     BenchmarkHelpers::runBenchmarkTest(test_info_->name(), "YOLO", false, false,
         [](MotionDetector& d) {
-            d.getConfig().yolo_weights_path = "../../input/yolo/yolov4-tiny.weights";
-            d.getConfig().yolo_config_path = "../../input/yolo/yolov4-tiny.cfg";
-            d.getConfig().yolo_classes_path = "../../input/yolo/coco.names";
+            BenchmarkHelpers::setYOLOFiles(d);
             d.getConfig().yolo_confidence_threshold = 0.5;
             d.getConfig().yolo_nms_threshold = 0.4;
             d.getConfig().yolo_input_size = 608;
-            d.getConfig().moving_up_lock_frames = 5;
-        }
-    );
-}
-
-// No frame locking (immediate response)
-TEST(BenchmarksTest, YOLOSingleCPU_NoFrameLock) {
-    BenchmarkHelpers::runBenchmarkTest(test_info_->name(), "YOLO", false, false,
-        [](MotionDetector& d) {
-            d.getConfig().yolo_weights_path = "../../input/yolo/yolov4-tiny.weights";
-            d.getConfig().yolo_config_path = "../../input/yolo/yolov4-tiny.cfg";
-            d.getConfig().yolo_classes_path = "../../input/yolo/coco.names";
-            d.getConfig().yolo_confidence_threshold = 0.5;
-            d.getConfig().yolo_nms_threshold = 0.4;
-            d.getConfig().yolo_input_size = 416;
-            d.getConfig().moving_up_lock_frames = 0;
-        }
-    );
-}
-
-// Extended frame locking (stable detection)
-TEST(BenchmarksTest, YOLOSingleCPU_ExtendedFrameLock) {
-    BenchmarkHelpers::runBenchmarkTest(test_info_->name(), "YOLO", false, false,
-        [](MotionDetector& d) {
-            d.getConfig().yolo_weights_path = "../../input/yolo/yolov4-tiny.weights";
-            d.getConfig().yolo_config_path = "../../input/yolo/yolov4-tiny.cfg";
-            d.getConfig().yolo_classes_path = "../../input/yolo/coco.names";
-            d.getConfig().yolo_confidence_threshold = 0.5;
-            d.getConfig().yolo_nms_threshold = 0.4;
-            d.getConfig().yolo_input_size = 416;
-            d.getConfig().moving_up_lock_frames = 20;
         }
     );
 }

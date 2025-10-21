@@ -15,7 +15,6 @@ TEST(BenchmarksTest, FarneMultiCPU_DefaultConfig) {
             d.getConfig().poly_n = 5;
             d.getConfig().poly_sigma = 1.1;
             d.getConfig().threshold = 2.5;
-            d.getConfig().moving_up_lock_frames = 5;
         }
     );
 }
@@ -31,7 +30,6 @@ TEST(BenchmarksTest, FarneMultiCPU_HighAccuracy) {
             d.getConfig().poly_n = 7;
             d.getConfig().poly_sigma = 1.5;
             d.getConfig().threshold = 2.0;
-            d.getConfig().moving_up_lock_frames = 10;
         }
     );
 }
@@ -47,7 +45,6 @@ TEST(BenchmarksTest, FarneMultiCPU_FastProcessing) {
             d.getConfig().poly_n = 5;
             d.getConfig().poly_sigma = 1.1;
             d.getConfig().threshold = 3.0;
-            d.getConfig().moving_up_lock_frames = 3;
         }
     );
 }
@@ -63,7 +60,6 @@ TEST(BenchmarksTest, FarneMultiCPU_SensitiveDetection) {
             d.getConfig().poly_n = 5;
             d.getConfig().poly_sigma = 1.1;
             d.getConfig().threshold = 1.5;
-            d.getConfig().moving_up_lock_frames = 2;
         }
     );
 }
@@ -79,7 +75,6 @@ TEST(BenchmarksTest, FarneMultiCPU_ConservativeDetection) {
             d.getConfig().poly_n = 5;
             d.getConfig().poly_sigma = 1.1;
             d.getConfig().threshold = 4.0;
-            d.getConfig().moving_up_lock_frames = 15;
         }
     );
 }
@@ -95,39 +90,6 @@ TEST(BenchmarksTest, FarneMultiCPU_LargeMotion) {
             d.getConfig().poly_n = 7;
             d.getConfig().poly_sigma = 1.5;
             d.getConfig().threshold = 2.5;
-            d.getConfig().moving_up_lock_frames = 5;
-        }
-    );
-}
-
-// No frame locking (immediate response)
-TEST(BenchmarksTest, FarneMultiCPU_NoFrameLock) {
-    BenchmarkHelpers::runBenchmarkTest(test_info_->name(), "FARNE", false, true,
-        [](MotionDetector& d) {
-            d.getConfig().pyr_scale = 0.5;
-            d.getConfig().levels = 3;
-            d.getConfig().winsize = 15;
-            d.getConfig().iterations = 3;
-            d.getConfig().poly_n = 5;
-            d.getConfig().poly_sigma = 1.1;
-            d.getConfig().threshold = 2.5;
-            d.getConfig().moving_up_lock_frames = 0;
-        }
-    );
-}
-
-// Extended frame locking (stable detection)
-TEST(BenchmarksTest, FarneMultiCPU_ExtendedFrameLock) {
-    BenchmarkHelpers::runBenchmarkTest(test_info_->name(), "FARNE", false, true,
-        [](MotionDetector& d) {
-            d.getConfig().pyr_scale = 0.5;
-            d.getConfig().levels = 3;
-            d.getConfig().winsize = 15;
-            d.getConfig().iterations = 3;
-            d.getConfig().poly_n = 5;
-            d.getConfig().poly_sigma = 1.1;
-            d.getConfig().threshold = 2.5;
-            d.getConfig().moving_up_lock_frames = 20;
         }
     );
 }
