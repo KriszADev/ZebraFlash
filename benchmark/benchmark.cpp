@@ -198,7 +198,7 @@ std::string getTimestamp() {
     std::tm tm = *std::localtime(&time);
 
     std::ostringstream oss;
-    oss << std::put_time(&tm, "%Y-%m-%d_%H-%M-%S");
+    oss << std::put_time(&tm, "%Y-%m-%d_%H-%M");
     return oss.str();
 }
 
@@ -239,13 +239,11 @@ void appendToSummaryCSV(const std::string& summary_file,
         return;
     }
 
-    // Write header if new file
     if (!file_exists) {
         file << "Test ID,Timestamp,Avg FPS,Balanced Accuracy,Crossing Accuracy,Not Crossing Accuracy,"
-             << "Precision,Recall,F1 Score,TP,FP,TN,FN,Total Frames,Detail File\n";
+             << "Precision,Recall,F1 Score,F2 Score,TP,FP,TN,FN,Total Frames,Detail File\n";
     }
 
-    // Calculate metrics
     CrossingMetrics metrics = calculateCrossingMetrics(results, ground_truth);
 
     double total_fps = 0.0;
@@ -266,7 +264,10 @@ void appendToSummaryCSV(const std::string& summary_file,
         ? 2 * (precision * recall) / (precision + recall)
         : 0.0;
 
-    // Extract just the filename from the full path for cleaner summary
+    double beta = 2.0;
+    double f2_score = (1 + beta * beta) * (precision * recall) /
+                      ((beta * beta * precision) + recall);
+
     std::string detail_file_short = std::filesystem::path(detail_filename).filename().string();
 
     file << testIdentifier << ","
@@ -278,6 +279,7 @@ void appendToSummaryCSV(const std::string& summary_file,
          << precision << ","
          << recall << ","
          << f1_score << ","
+         << f2_score << ","
          << metrics.true_positives << ","
          << metrics.false_positives << ","
          << metrics.true_negatives << ","

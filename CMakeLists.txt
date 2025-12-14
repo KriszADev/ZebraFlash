@@ -68,7 +68,6 @@ target_link_libraries(ZebraFlash PRIVATE yaml-cpp ${OpenCV_LIBS} nlohmann_json::
 enable_testing()
 
 add_executable(ZebraFlashTests
-        tests/test_application.cpp
         motion-detector/motion_detector.cpp
         utils/motion_utils.cpp
         thread-pool/thread_pool.cpp
@@ -77,6 +76,10 @@ add_executable(ZebraFlashTests
         tests/benchmarks/farne_tests/benchmark_farne_cs_test.cpp
         tests/benchmarks/farne_tests/benchmark_farne_cm_test.cpp
         tests/benchmarks/farne_tests/benchmark_farne_g_test.cpp
+        tests/benchmarks/lucas_kanade_tests/benchmark_lk_cm_test.cpp
+        tests/benchmarks/lucas_kanade_tests/benchmark_lk_g_test.cpp
+        tests/benchmarks/yolo_tests/benchmark_yolo_cs_test.cpp
+        tests/benchmarks/yolo_tests/benchmark_yolo_g_test.cpp
 )
 
 target_include_directories(ZebraFlashTests PRIVATE
